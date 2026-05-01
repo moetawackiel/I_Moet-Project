@@ -11,7 +11,7 @@
     <div class="max-w-md mx-auto bg-white rounded-3xl shadow-lg overflow-hidden">
         <div class="bg-teal-600 p-6 text-white text-center">
             <h1 class="text-xl font-bold">ABSENSI DIGITAL AM</h1>
-            <p class="text-sm opacity-80">Scan Kartu Ujian Siswa</p>
+            <p class="text-sm opacity-80">MIS MIDRARUL ULUM</p>
         </div>
 
         <div class="p-6 space-y-4">
@@ -30,15 +30,24 @@
             <!-- Area Scanner -->
             <div id="reader" class="rounded-2xl overflow-hidden border-2 border-dashed border-gray-200"></div>
 
-            <div id="status" class="hidden p-4 rounded-2xl text-center font-bold"></div>
+            <!-- Status & Tombol OK -->
+            <div id="status-container" class="hidden space-y-3">
+                <div id="status" class="p-4 rounded-2xl text-center font-bold"></div>
+                <button id="btn-ok" onclick="resetScanner()" class="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold shadow-lg hover:bg-teal-700 active:scale-95 transition-all">
+                    OK / SCAN BERIKUTNYA
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcuO9getXw5sCDth9lzbE-o-2zqfaINrLPIqjtv2hL_spYjyi3YVDNnr6rBosNEgcIIg/exec";
+        
+        let isProcessing = false;
 
         function onScanSuccess(decodedText) {
-            const statusDiv = document.getElementById('status');
+            if (isProcessing) return; 
+
             const mapel = document.getElementById('mapel').value;
             const sesi = document.getElementById('sesi').value;
 
@@ -47,34 +56,42 @@
                 return;
             }
 
-            statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-            statusDiv.classList.add('bg-blue-100', 'text-blue-700');
+            isProcessing = true; 
+
+            const statusContainer = document.getElementById('status-container');
+            const statusDiv = document.getElementById('status');
+            const btnOk = document.getElementById('btn-ok');
+
+            // Tampilkan container status
+            statusContainer.classList.remove('hidden');
+            btnOk.classList.add('hidden'); // Sembunyikan tombol OK saat loading
+
+            statusDiv.className = "p-4 rounded-2xl text-center font-bold bg-blue-100 text-blue-700";
             statusDiv.innerText = "Mengirim data: " + decodedText + "...";
 
-            // Mengirim data ke Google Sheets
-            // Mengirim data ke Google Sheets
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors', // TAMBAHKAN INI agar tidak error CORS
-                headers: {
-                    'Content-Type': 'text/plain', // Gunakan text/plain untuk Google Apps Script
-                },
+                mode: 'no-cors',
                 body: JSON.stringify({
                     nomorUjian: decodedText,
-                    namaSiswa: "Terdeteksi System", 
+                    namaSiswa: "Terdeteksi System",
                     sesi: sesi,
                     mapel: mapel
                 })
             }).then(() => {
-                statusDiv.classList.replace('bg-blue-100', 'bg-green-100');
-                statusDiv.classList.replace('text-blue-700', 'text-green-700');
+                statusDiv.className = "p-4 rounded-2xl text-center font-bold bg-green-100 text-green-700";
                 statusDiv.innerText = "BERHASIL: " + decodedText;
-                
-                // Beri jeda agar tidak scan berkali-kali secara tidak sengaja
-                setTimeout(() => { statusDiv.classList.add('hidden'); }, 3000);
+                btnOk.classList.remove('hidden'); // Munculkan tombol OK setelah sukses
             }).catch(err => {
-                alert("Gagal mengirim data. Cek koneksi internet.");
+                alert("Gagal kirim. Cek internet!");
+                isProcessing = false;
             });
+        }
+
+        function resetScanner() {
+            // Sembunyikan container status dan buka kunci scanner
+            document.getElementById('status-container').classList.add('hidden');
+            isProcessing = false;
         }
 
         let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
