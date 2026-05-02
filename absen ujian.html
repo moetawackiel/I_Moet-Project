@@ -32,16 +32,44 @@
         <div class="p-6 space-y-6">
             <!-- Form Pengaturan -->
             <div class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data Sesi & Mapel</label>
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Tahun Ajaran 2025-2026</label>
+                    
                     <div class="grid grid-cols-2 gap-3">
                         <select id="sesi" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
                             <option value="Sesi 1">Sesi 1</option>
                             <option value="Sesi 2">Sesi 2</option>
-                            <option value="Sesi 3">Sesi 3</option>
                         </select>
-                        <input type="text" id="mapel" placeholder="Mata Pelajaran" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
+                        
+                        <select id="mapel" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
+                            <option value="">Pilih Mapel</option>
+                            <option value="B INDONESIA">B INDONESIA</option>
+                            <option value="AQIDAH AKHLAQ">AQIDAH AKHLAQ</option>
+                            <option value="MATEMATIKA">MATEMATIKA</option>
+                            <option value="AL QUR'AN HADITS">AL QUR'AN HADITS</option>
+                            <option value="FIKIH">FIKIH</option>
+                            <option value="PENDIDIKAN PANCASILA">PP</option>
+                            <option value="B ARAB">B ARAB</option>
+                            <option value="IPAS">IPAS</option>
+                            <option value="SKI">SKI</option>
+                            <option value="B INGGRIS">B INGGRIS</option>
+                            <option value="B DAERAH">B DAERAH</option>
+                        </select>
                     </div>
+
+                    <!-- Input Nama Pengawas Updated -->
+                    <select id="pengawas" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
+                        <option value="">Pilih Nama Pengawas</option>
+                        <option value="Siti Sahroti. S.Pd.I">Siti Sahroti. S.Pd.I</option>
+                        <option value="Nurul Faizah. S.Pd">Nurul Faizah. S.Pd</option>
+                        <option value="Zahrotun Nuroniyyah. S.Pd">Zahrotun Nuroniyyah. S.Pd</option>
+                        <option value="Bella Nur Azizah. S.Pd">Bella Nur Azizah. S.Pd</option>
+                        <option value="Faiqotuz Zakiyah. S.Pd.I">Faiqotuz Zakiyah. S.Pd.I</option>
+                        <option value="Fahmi Fajar C">Fahmi Fajar C</option>
+                        <option value="Haidar Musthofa. S.Sy">Haidar Musthofa. S.Sy</option>
+                        <option value="Achmad Bashori. S.Pd.I">Achmad Bashori. S.Pd.I</option>
+                        <option value="Yeni Irfa Darojah">Yeni Irfa Darojah</option>
+                    </select>
                 </div>
             </div>
 
@@ -83,15 +111,16 @@
         function onScanSuccess(decodedText) {
             if (isProcessing) return;
 
-            const mapelValue = document.getElementById('mapel').value.trim();
-            if(!mapelValue) {
+            const mapelValue = document.getElementById('mapel').value;
+            const pengawasValue = document.getElementById('pengawas').value;
+
+            if(!mapelValue || !pengawasValue) {
                 isProcessing = true;
-                alert("Harap isi Mata Pelajaran terlebih dahulu!");
+                alert("Harap pilih Mata Pelajaran dan Nama Pengawas terlebih dahulu!");
                 setTimeout(() => { isProcessing = false; }, 2000);
                 return;
             }
 
-            // Simpan data dan tampilkan area konfirmasi
             lastDecodedText = decodedText;
             isProcessing = true;
             
@@ -106,7 +135,6 @@
             statusDiv.className = "p-5 rounded-2xl text-center flex flex-col items-center justify-center space-y-1 bg-teal-50 border border-teal-100";
             statusText.innerText = decodedText;
             
-            // Berhenti scan sementara
             html5QrcodeScanner.pause(true);
         }
 
@@ -118,8 +146,9 @@
             btnKirim.innerText = "Mengirim...";
             btnKirim.classList.add('opacity-50');
 
-            const mapelValue = document.getElementById('mapel').value.trim();
+            const mapelValue = document.getElementById('mapel').value;
             const sesiValue = document.getElementById('sesi').value;
+            const pengawasValue = document.getElementById('pengawas').value;
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
@@ -130,6 +159,7 @@
                     namaSiswa: "", 
                     sesi: sesiValue,
                     mapel: mapelValue,
+                    pengawas: pengawasValue,
                     timestamp: new Date().toISOString()
                 })
             }).then(() => {
@@ -166,7 +196,8 @@
         );
         html5QrcodeScanner.render(onScanSuccess);
      </script>
-<footer class="watermark-footer">
+
+    <footer class="watermark-footer">
         MIS Midrarul Ulum &copy; 2026 - I_Moet Project
     </footer>
 
