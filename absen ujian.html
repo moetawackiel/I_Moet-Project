@@ -1,100 +1,169 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner Absensi AM</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #reader { border: none !important; }
+        #reader__dashboard_section_csr button {
+            background-color: #0d9488 !important;
+            color: white !important;
+            border-radius: 0.75rem !important;
+            padding: 8px 16px !important;
+            border: none !important;
+            font-size: 14px !important;
+        }
+        .btn-primary {
+            @apply bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-2xl transition-all active:scale-95 shadow-lg shadow-teal-200;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-4 font-sans">
-    <div class="max-w-md mx-auto bg-white rounded-3xl shadow-lg overflow-hidden">
-        <div class="bg-teal-600 p-6 text-white text-center">
-            <h1 class="text-xl font-bold">ABSENSI DIGITAL AM 2026</h1>
-            <p class="text-sm opacity-80">MIS MIDRARUL ULUM</p>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 font-sans">
+    <div class="w-full max-w-md bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100">
+        <!-- Header -->
+        <div class="bg-teal-600 p-8 text-white text-center">
+            <h1 class="text-2xl font-black tracking-tight">ABSENSI DIGITAL AM</h1>
+            <p class="text-teal-100 text-sm mt-1">Konfirmasi Data Sebelum Kirim</p>
         </div>
 
-        <div class="p-6 space-y-4">
-            <!-- Pilihan Sesi & Mapel -->
-            <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Pengaturan Sesi</label>
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="sesi" class="w-full p-3 bg-gray-50 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none">
-                        <option value="Sesi 1">Sesi 1</option>
-                        <option value="Sesi 2">Sesi 2</option>
-                    </select>
-                    <input type="text" id="mapel" placeholder="Mata Pelajaran" class="w-full p-3 bg-gray-50 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none">
+        <div class="p-6 space-y-6">
+            <!-- Form Pengaturan -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data Sesi & Mapel</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="sesi" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
+                            <option value="Sesi 1">Sesi 1</option>
+                            <option value="Sesi 2">Sesi 2</option>
+                            <option value="Sesi 3">Sesi 3</option>
+                        </select>
+                        <input type="text" id="mapel" placeholder="Mata Pelajaran" class="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none">
+                    </div>
                 </div>
             </div>
 
             <!-- Area Scanner -->
-            <div id="reader" class="rounded-2xl overflow-hidden border-2 border-dashed border-gray-200"></div>
+            <div id="scanner-container" class="relative">
+                <div id="reader" class="rounded-3xl overflow-hidden bg-gray-900 aspect-square"></div>
+                <div class="absolute inset-0 pointer-events-none border-[12px] border-white/10 rounded-3xl"></div>
+            </div>
 
-            <!-- Status & Tombol OK -->
-            <div id="status-container" class="hidden space-y-3">
-                <div id="status" class="p-4 rounded-2xl text-center font-bold"></div>
-                <button id="btn-ok" onclick="resetScanner()" class="w-full py-4 bg-teal-600 text-white rounded-2xl font-bold shadow-lg hover:bg-teal-700 active:scale-95 transition-all">
-                    OK / SCAN BERIKUTNYA
-                </button>
+            <!-- Area Konfirmasi & Status -->
+            <div id="action-area" class="hidden space-y-4">
+                <div id="status" class="p-5 rounded-2xl text-center flex flex-col items-center justify-center space-y-1">
+                    <p class="text-gray-500 text-xs uppercase font-bold">Data Terdeteksi:</p>
+                    <p id="status-text" class="font-black text-xl text-teal-800"></p>
+                </div>
+                
+                <div id="button-group" class="grid grid-cols-2 gap-3">
+                    <button onclick="resetScanner()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 rounded-2xl transition-all">
+                        Batal
+                    </button>
+                    <button id="btn-kirim" onclick="sendData()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-100 transition-all active:scale-95">
+                        Kirim (OK)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panduan -->
+            <div id="instruction" class="text-center">
+                <p class="text-gray-400 text-[11px]">Arahkan kamera ke QR Code Kartu Ujian</p>
             </div>
         </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQXA79-am8yvNRDMuIv-75xjsk16s0VONG7CU4XRFMI5gbKunzPbV9e3Zx6tqoziUgpw/exec";
-        
+        let lastDecodedText = "";
         let isProcessing = false;
 
         function onScanSuccess(decodedText) {
-            if (isProcessing) return; 
+            if (isProcessing) return;
 
-            const mapel = document.getElementById('mapel').value;
-            const sesi = document.getElementById('sesi').value;
-
-            if(!mapel) {
-                alert("Harap isi Mata Pelajaran dulu!");
+            const mapelValue = document.getElementById('mapel').value.trim();
+            if(!mapelValue) {
+                isProcessing = true;
+                alert("Harap isi Mata Pelajaran terlebih dahulu!");
+                setTimeout(() => { isProcessing = false; }, 2000);
                 return;
             }
 
-            isProcessing = true; 
-
-            const statusContainer = document.getElementById('status-container');
+            // Simpan data dan tampilkan area konfirmasi
+            lastDecodedText = decodedText;
+            isProcessing = true;
+            
+            document.getElementById('scanner-container').classList.add('opacity-30');
+            document.getElementById('instruction').classList.add('hidden');
+            
+            const actionArea = document.getElementById('action-area');
+            const statusText = document.getElementById('status-text');
             const statusDiv = document.getElementById('status');
-            const btnOk = document.getElementById('btn-ok');
+            
+            actionArea.classList.remove('hidden');
+            statusDiv.className = "p-5 rounded-2xl text-center flex flex-col items-center justify-center space-y-1 bg-teal-50 border border-teal-100";
+            statusText.innerText = decodedText;
+            
+            // Berhenti scan sementara
+            html5QrcodeScanner.pause(true);
+        }
 
-            // Tampilkan container status
-            statusContainer.classList.remove('hidden');
-            btnOk.classList.add('hidden'); // Sembunyikan tombol OK saat loading
+        function sendData() {
+            const btnKirim = document.getElementById('btn-kirim');
+            const statusText = document.getElementById('status-text');
+            
+            btnKirim.disabled = true;
+            btnKirim.innerText = "Mengirim...";
+            btnKirim.classList.add('opacity-50');
 
-            statusDiv.className = "p-4 rounded-2xl text-center font-bold bg-blue-100 text-blue-700";
-            statusDiv.innerText = "Mengirim data: " + decodedText + "...";
+            const mapelValue = document.getElementById('mapel').value.trim();
+            const sesiValue = document.getElementById('sesi').value;
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify({
-                    nomorUjian: decodedText,
-                    namaSiswa: "",
-                    sesi: sesi,
-                    mapel: mapel
+                    nomorUjian: lastDecodedText,
+                    namaSiswa: "Terdeteksi System", 
+                    sesi: sesiValue,
+                    mapel: mapelValue,
+                    timestamp: new Date().toISOString()
                 })
             }).then(() => {
-                statusDiv.className = "p-4 rounded-2xl text-center font-bold bg-green-100 text-green-700";
-                statusDiv.innerText = "BERHASIL: " + decodedText;
-                btnOk.classList.remove('hidden'); // Munculkan tombol OK setelah sukses
+                document.getElementById('status').className = "p-5 rounded-2xl text-center flex flex-col items-center justify-center space-y-1 bg-green-50 border border-green-200 text-green-700";
+                statusText.innerText = "BERHASIL DIKIRIM";
+                
+                setTimeout(resetScanner, 2000);
             }).catch(err => {
-                alert("Gagal kirim. Cek internet!");
-                isProcessing = false;
+                alert("Gagal mengirim data. Periksa koneksi.");
+                btnKirim.disabled = false;
+                btnKirim.innerText = "Kirim (OK)";
+                btnKirim.classList.remove('opacity-50');
             });
         }
 
         function resetScanner() {
-            // Sembunyikan container status dan buka kunci scanner
-            document.getElementById('status-container').classList.add('hidden');
             isProcessing = false;
+            lastDecodedText = "";
+            
+            document.getElementById('scanner-container').classList.remove('opacity-30');
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('instruction').classList.remove('hidden');
+            
+            const btnKirim = document.getElementById('btn-kirim');
+            btnKirim.disabled = false;
+            btnKirim.innerText = "Kirim (OK)";
+            btnKirim.classList.remove('opacity-50');
+            
+            html5QrcodeScanner.resume();
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 15, qrbox: { width: 220, height: 220 } }
+        );
         html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
