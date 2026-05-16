@@ -229,12 +229,18 @@
 
         window.onload = function() {
             html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", { 
-                    fps: 15, 
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0
-                }
-            );
+    "reader",
+    {
+        fps: 15,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+
+        // Paksa kamera belakang
+        videoConstraints: {
+            facingMode: { exact: "environment" }
+        }
+    }
+);
             html5QrcodeScanner.render(onScanSuccess);
         };
     </script>
