@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Absensi AM - MIS Midrarul Ulum</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        #reader { border: none !important; }
+        #reader__dashboard_section_csr button {
+            background-color: #0d9488 !important;
+            color: white !important;
+            border-radius: 1rem !important;
+            padding: 10px 20px !important;
+            border: none !important;
+            font-weight: 600 !important;
+            transition: all 0.2s;
+        }
+        #reader__dashboard_section_csr button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white relative">
+        
+        <!-- Header Section -->
+        <div class="bg-teal-600 p-8 text-white text-center relative overflow-hidden">
+            <h1 class="text-2xl font-black tracking-tight relative z-10 uppercase">Absensi Digital </h1>
+            <p class="text-teal-100 text-sm mt-1 font-semibold tracking-wide relative z-10">Madrasah Ibtidaiyyah Puger</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <div class="space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tahun Ajaran 2025-2026</label>
+                    <span class="bg-teal-100 text-teal-700 text-[9px] px-2 py-0.5 rounded-full font-bold">LIVE SYNC</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <span class="text-[9px] font-bold text-gray-400 ml-2 uppercase">Sesi</span>
+                        <select id="sesi" class="w-full p-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none">
+                            <option value="Sesi 1">Sesi 1</option>
+                            <option value="Sesi 2">Sesi 2</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <span class="text-[9px] font-bold text-gray-400 ml-2 uppercase">Mata Pelajaran</span>
+                        <select id="mapel" class="w-full p-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-teal-500 outline-none">
+                            <option value="">Pilih Mapel</option>
+                            <option value="B INDONESIA">B INDONESIA</option>
+                            <option value="AQIDAH AKHLAQ">AQIDAH AKHLAQ</option>
+                            <option value="MATEMATIKA">MATEMATIKA</option>
+                            <option value="AL QUR'AN HADITS">AL QUR'AN HADITS</option>
+                            <option value="FIKIH">FIKIH</option>
+                            <option value="PP">PENDIDIKAN PANCASILA</option>
+                            <option value="B ARAB">B ARAB</option>
+                            <option value="IPAS">IPAS</option>
+                            <option value="SKI">SKI</option>
+                            <option value="B INGGRIS">B INGGRIS</option>
+                            <option value="B DAERAH">B DAERAH</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Nama Pengawas - MANUAL TEXT INPUT -->
+                <div class="space-y-1">
+                    <span class="text-[9px] font-bold text-gray-400 ml-2 uppercase">Nama Pengawas </span>
+                    <input type="text" id="pengawas" placeholder="Masukkan nama lengkap ..." 
+                        class="w-full p-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-semibold focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all outline-none placeholder:text-gray-300">
+                </div>
+            </div>
+
+            <div id="scanner-container" class="relative group">
+                <div id="reader" class="rounded-[2rem] overflow-hidden bg-slate-900 aspect-square shadow-inner"></div>
+                <!-- Custom Scanner Overlay -->
+                <div id="scan-frame" class="absolute inset-10 border-2 border-teal-500/30 rounded-2xl pointer-events-none opacity-0 transition-opacity">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-teal-500 rounded-tl-lg"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-teal-500 rounded-tr-lg"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-teal-500 rounded-bl-lg"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-teal-500 rounded-br-lg"></div>
+                </div>
+            </div>
+
+            <!-- Action & Status Area -->
+            <div id="action-area" class="hidden animate-slide-in space-y-4">
+                <div id="status" class="p-5 rounded-3xl text-center flex flex-col items-center justify-center space-y-2 bg-teal-50 border border-teal-100">
+                    <p class="text-[10px] text-teal-600 uppercase font-black tracking-tighter">Kartu Terdeteksi</p>
+                    <p id="status-text" class="font-black text-2xl text-teal-900 truncate w-full"></p>
+                </div>
+                
+                <div id="button-group" class="grid grid-cols-2 gap-4">
+                    <button onclick="resetScanner()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-4 rounded-2xl transition-all">
+                        Batal
+                    </button>
+                    <button id="btn-kirim" onclick="sendData()" class="bg-teal-600 hover:bg-teal-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-teal-200 transition-all active:scale-95">
+                        KIRIM (OK)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instruction -->
+            <div id="instruction" class="text-center">
+                <p class="text-gray-400 text-[11px] font-medium italic">Arahkan kamera ke barcode kartu ujian siswa</p>
+            </div>
+        </div>
+
+        <footer class="p-4 text-center border-t border-gray-50">
+            <p class="text-[10px] text-gray-500  tracking-widest leading-relaxed">
+                OpM Puger &copy;I_Moet Project <br>
+                <span class="text-teal-400/50"> </span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        ```javascript
+// URL utama (cadangan/default)
+const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwByX4E6wI2eHTwgq5yadkYr9G7EkoPWJslHDabpI7HhGN_-Skb-mchEzGDGs-Wvk77Zw/exec";
+
+// Ambil parameter dari URL
+const urlParams = new URLSearchParams(window.location.search);
+
+// Ambil parameter "script"
+const scriptParam = urlParams.get("script");
+
+// Gunakan parameter jika ada, jika tidak pakai default
+const SCRIPT_URL = scriptParam || DEFAULT_SCRIPT_URL;
+
+console.log("SCRIPT_URL aktif:", SCRIPT_URL);
+```
+
+        let lastDecodedText = "";
+        let isProcessing = false;
+        let html5QrcodeScanner;
+
+        function onScanSuccess(decodedText) {
+            if (isProcessing) return;
+
+            const mapelValue = document.getElementById('mapel').value;
+            const pengawasValue = document.getElementById('pengawas').value.trim();
+
+            if(!mapelValue || !pengawasValue) {
+                isProcessing = true;
+                // Menggunakan penanganan pesan yang lebih halus daripada alert standar jika memungkinkan
+                alert("PENTING: Pilih Mata Pelajaran dan isi Nama Pengawas terlebih dahulu!");
+                setTimeout(() => { isProcessing = false; }, 2000);
+                return;
+            }
+
+            lastDecodedText = decodedText;
+            isProcessing = true;
+            
+            document.getElementById('scanner-container').classList.add('opacity-30');
+            document.getElementById('instruction').classList.add('hidden');
+            document.getElementById('scan-frame').classList.remove('opacity-0');
+            
+            const actionArea = document.getElementById('action-area');
+            const statusText = document.getElementById('status-text');
+            
+            actionArea.classList.remove('hidden');
+            statusText.innerText = decodedText;
+            
+            if (window.navigator.vibrate) window.navigator.vibrate(50);
+            html5QrcodeScanner.pause(true);
+        }
+
+        function sendData() {
+            const btnKirim = document.getElementById('btn-kirim');
+            const statusText = document.getElementById('status-text');
+            const statusDiv = document.getElementById('status');
+            
+            btnKirim.disabled = true;
+            btnKirim.innerText = "Mengirim...";
+            btnKirim.classList.add('opacity-50');
+
+            const mapelValue = document.getElementById('mapel').value;
+            const sesiValue = document.getElementById('sesi').value;
+            const pengawasValue = document.getElementById('pengawas').value.trim();
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({
+                    nomorUjian: lastDecodedText,
+                    namaSiswa: "", 
+                    sesi: sesiValue,
+                    mapel: mapelValue,
+                    pengawas: pengawasValue,
+                    timestamp: new Date().toISOString()
+                })
+            }).then(() => {
+                statusDiv.className = "p-5 rounded-3xl text-center flex flex-col items-center justify-center space-y-2 bg-green-50 border border-green-200 text-green-700";
+                statusText.innerText = "BERHASIL DIKIRIM!";
+                setTimeout(resetScanner, 1500);
+            }).catch(err => {
+                alert("Gagal mengirim data. Periksa koneksi internet.");
+                btnKirim.disabled = false;
+                btnKirim.innerText = "KIRIM (OK)";
+                btnKirim.classList.remove('opacity-50');
+            });
+        }
+
+        function resetScanner() {
+            isProcessing = false;
+            lastDecodedText = "";
+            
+            document.getElementById('scanner-container').classList.remove('opacity-30');
+            document.getElementById('scan-frame').classList.add('opacity-0');
+            document.getElementById('action-area').classList.add('hidden');
+            document.getElementById('instruction').classList.remove('hidden');
+            
+            const btnKirim = document.getElementById('btn-kirim');
+            btnKirim.disabled = false;
+            btnKirim.innerText = "KIRIM (OK)";
+            btnKirim.classList.remove('opacity-50');
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = "p-5 rounded-3xl text-center flex flex-col items-center justify-center space-y-2 bg-teal-50 border border-teal-100";
+            
+            html5QrcodeScanner.resume();
+        }
+
+        window.onload = function() {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader",
+    {
+        fps: 15,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+
+        // Paksa kamera belakang
+        videoConstraints: {
+            facingMode: { exact: "environment" }
+        }
+    }
+);
+            html5QrcodeScanner.render(onScanSuccess);
+        };
+    </script>
+</body>
+</html>
