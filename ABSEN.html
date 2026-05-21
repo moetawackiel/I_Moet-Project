@@ -142,7 +142,7 @@ const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwByX4E6wI2e
 const urlParams = new URLSearchParams(window.location.search);
 
 // Ambil parameter "script"
-const scriptParam = urlParams.get("script");
+const scriptParam = decodeURIComponent(urlParams.get("script") || "");
 
 // Gunakan parameter jika ada, jika tidak pakai default
 const SCRIPT_URL = scriptParam || DEFAULT_SCRIPT_URL;
